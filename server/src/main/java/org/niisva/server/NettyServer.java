@@ -32,7 +32,7 @@ public class NettyServer {
                     .childHandler(new ChannelInitializer<Channel>() {
                         @Override
                         protected void initChannel(Channel ch) throws Exception {
-                            ch.pipeline().addLast(new StringDecoder(), new StringEncoder(), new ToConsoleOutputHandler()
+                            ch.pipeline().addLast(new ToConsoleOutputHandler()
                             );
                             log.info("new connection with id: " + ch.id());
                         }
