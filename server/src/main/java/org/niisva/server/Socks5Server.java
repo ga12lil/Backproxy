@@ -2,24 +2,24 @@ package org.niisva.server;
 
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
+import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.socksx.v5.*;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.niisva.handler.Socks5ServerHandler;
 
 @Slf4j
+@RequiredArgsConstructor
 public class Socks5Server {
 
     private final int port;
     private final int backlogSize;
-
-    public Socks5Server(int port, int backlogSize) {
-        this.port = port;
-        this.backlogSize = backlogSize;
-    }
+    private final ChannelGroup channels;
+    private final ChannelGroup socks5channels;
 
     public void run() throws Exception {
         EventLoopGroup bossGroup = new NioEventLoopGroup(1);
@@ -37,6 +37,7 @@ public class Socks5Server {
                                     new Socks5CommandRequestDecoder(),
                                     new Socks5ServerHandler()
                             );
+                            socks5channels.add(ch);
                         }
                     })
                     .option(ChannelOption.SO_BACKLOG, backlogSize)

@@ -1,5 +1,8 @@
 package org.niisva;
 
+import io.netty.channel.group.ChannelGroup;
+import io.netty.channel.group.DefaultChannelGroup;
+import io.netty.util.concurrent.GlobalEventExecutor;
 import lombok.extern.slf4j.Slf4j;
 import org.niisva.server.NettyServer;
 import org.niisva.server.Socks5Server;
@@ -10,12 +13,15 @@ public class Main {
         int port = 8000;
         int socks5port = 1080;
 
+        final ChannelGroup channels = new DefaultChannelGroup(GlobalEventExecutor.INSTANCE);
+        final ChannelGroup socks5channels = new DefaultChannelGroup(GlobalEventExecutor.INSTANCE);
+
         Thread tcpThread = new Thread(
                 new Runnable() {
                     @Override
                     public void run() {
                         try {
-                            new NettyServer(port, 128).run();
+                            new NettyServer(port, 128, channels, socks5channels).run();
                         } catch (Exception e) {
                             log.info(e.getMessage());
                         }
@@ -28,7 +34,7 @@ public class Main {
                     @Override
                     public void run() {
                         try {
-                            new Socks5Server(socks5port, 128).run();
+                            new Socks5Server(socks5port, 128,  channels, socks5channels).run();
                         } catch (Exception e) {
                             log.info(e.getMessage());
                         }

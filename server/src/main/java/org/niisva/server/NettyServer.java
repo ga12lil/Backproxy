@@ -2,24 +2,23 @@ package org.niisva.server;
 
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
+import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
-import io.netty.handler.codec.string.StringDecoder;
-import io.netty.handler.codec.string.StringEncoder;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.niisva.handler.ClientHandler;
 import org.niisva.handler.ToConsoleOutputHandler;
 
 @Slf4j
+@RequiredArgsConstructor
 public class NettyServer {
     private final int port;
     private final int backlogSize;
-
-    public NettyServer(int port, int backlogSize) {
-        this.port = port;
-        this.backlogSize = backlogSize;
-    }
+    private final ChannelGroup channels;
+    private final ChannelGroup socks5channels;
 
     public void run() throws Exception {
         EventLoopGroup bossGroup = new NioEventLoopGroup();
@@ -32,8 +31,9 @@ public class NettyServer {
                     .childHandler(new ChannelInitializer<Channel>() {
                         @Override
                         protected void initChannel(Channel ch) throws Exception {
-                            ch.pipeline().addLast(new ToConsoleOutputHandler()
+                            ch.pipeline().addLast(new ClientHandler(socks5channels)
                             );
+                            channels.add(ch);
                             log.info("new connection with id: " + ch.id());
                         }
                     })

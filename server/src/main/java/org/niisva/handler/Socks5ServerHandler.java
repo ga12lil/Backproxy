@@ -6,16 +6,14 @@ import io.netty.handler.codec.socksx.v5.Socks5CommandStatus;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class Socks5ServerHandler extends SimpleChannelInboundHandler<Socks5Message> {
+public class Socks5ServerHandler extends ChannelInboundHandlerAdapter {
 
     @Override
-    protected void channelRead0(ChannelHandlerContext ctx, Socks5Message msg) {
+    public void channelRead(ChannelHandlerContext ctx, Object msg) {
         if (msg instanceof Socks5InitialRequest) {
             // Отправляем клиенту, что аутентификация не требуется
             ctx.writeAndFlush(new DefaultSocks5InitialResponse(Socks5AuthMethod.NO_AUTH));
-        } else if (msg instanceof Socks5CommandRequest) {
-            Socks5CommandRequest request = (Socks5CommandRequest) msg;
-
+        } else if (msg instanceof Socks5CommandRequest request) {
             if (request.type() == Socks5CommandType.CONNECT) {
                 handleConnect(ctx, request);
             } else {
