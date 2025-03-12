@@ -11,6 +11,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.niisva.handler.ClientHandler;
 import org.niisva.handler.ToConsoleOutputHandler;
+import io.netty.buffer.Unpooled;
+import java.nio.charset.StandardCharsets;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -41,7 +43,9 @@ public class NettyServer {
                     .childOption(ChannelOption.SO_KEEPALIVE, true);
 
             ChannelFuture f = b.bind(port).sync();
+            channel = f.channel();
             log.info("TCP Server started on port " + port);
+
             f.channel().closeFuture().sync();
         } finally {
             workerGroup.shutdownGracefully();
