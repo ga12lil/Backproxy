@@ -2,7 +2,6 @@ package org.niisva.handler;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
-import io.netty.buffer.Unpooled;
 import io.netty.channel.*;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.handler.codec.socksx.v5.*;
@@ -12,7 +11,6 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -38,13 +36,12 @@ public class Socks5ServerHandler extends ChannelInboundHandlerAdapter {
                 msgBuf.getBytes(msgBuf.readerIndex(), bytes);
 
                 ByteBufAllocator allocator = ByteBufAllocator.DEFAULT;
-                ByteBuf bufAdr = allocator.buffer(); // Создает новый ByteBuf
-                ByteBuf buf = allocator.buffer();
                 // Запись данных в ByteBuf
-
-                bufAdr.writeBytes(targetAddress);
-                buf.writeBytes(bytes);
                 for (var ch : channels) {
+                    ByteBuf bufAdr = allocator.buffer(); // Создает новый ByteBuf
+                    ByteBuf buf = allocator.buffer();
+                    bufAdr.writeBytes(targetAddress);
+                    buf.writeBytes(bytes);
                     ch.write(bufAdr);
                     ch.writeAndFlush(buf);
                 }
@@ -59,7 +56,7 @@ public class Socks5ServerHandler extends ChannelInboundHandlerAdapter {
         targetAddress = new byte[adrLen + 3];
         targetAddress[0] = adrLen;
         System.arraycopy(adr, 0,targetAddress, 1, adrLen);
-        System.arraycopy(port, 0, targetAddress, adrLen + 1, 2);
+        System.arraycopy(port, 2, targetAddress, adrLen + 1, 2);
         ctx.writeAndFlush(new DefaultSocks5CommandResponse(
                 Socks5CommandStatus.SUCCESS,
                 request.dstAddrType(),
