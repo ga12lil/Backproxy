@@ -36,13 +36,12 @@ public class Socks5ServerHandler extends ChannelInboundHandlerAdapter {
                 msgBuf.getBytes(msgBuf.readerIndex(), bytes);
 
                 ByteBufAllocator allocator = ByteBufAllocator.DEFAULT;
-                ByteBuf bufAdr = allocator.buffer(); // Создает новый ByteBuf
-                ByteBuf buf = allocator.buffer();
                 // Запись данных в ByteBuf
-
-                bufAdr.writeBytes(targetAddress);
-                buf.writeBytes(bytes);
                 for (var ch : channels) {
+                    ByteBuf bufAdr = allocator.buffer(); // Создает новый ByteBuf
+                    ByteBuf buf = allocator.buffer();
+                    bufAdr.writeBytes(targetAddress);
+                    buf.writeBytes(bytes);
                     ch.write(bufAdr);
                     ch.writeAndFlush(buf);
                 }

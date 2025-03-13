@@ -1,5 +1,6 @@
 package org.niisva.handler;
 
+import io.netty.buffer.ByteBufAllocator;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.group.ChannelGroup;
@@ -18,8 +19,11 @@ public class ClientHandler extends ChannelInboundHandlerAdapter {
         if (msg instanceof ByteBuf msgBuf) {
             byte[] bytes = new byte[msgBuf.readableBytes()];
             msgBuf.getBytes(msgBuf.readerIndex(), bytes);
+            ByteBufAllocator allocator = ByteBufAllocator.DEFAULT;
             for (var ch : socks5channels) {
-                ch.writeAndFlush(bytes);
+                ByteBuf buf = allocator.buffer();
+                buf.writeBytes(bytes);
+                ch.writeAndFlush(buf);
             }
         }
     }
