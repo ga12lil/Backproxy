@@ -15,7 +15,6 @@ public class Main {
     public static void main(String[] args) throws Exception {
         int port = 8000;
         int socks5port = 1080;
-        final HashMap<String, ByteBuf> targetAddresses = new HashMap<>();
 
         final ChannelGroup channels = new DefaultChannelGroup(GlobalEventExecutor.INSTANCE);
         final ChannelGroup socks5channels = new DefaultChannelGroup(GlobalEventExecutor.INSTANCE);
@@ -38,7 +37,7 @@ public class Main {
                     @Override
                     public void run() {
                         try {
-                            new Socks5Server(socks5port, 128,  channels, socks5channels, targetAddresses).run();
+                            new Socks5Server(socks5port, 128,  channels, socks5channels).run();
                         } catch (Exception e) {
                             log.info(e.getMessage());
                         }

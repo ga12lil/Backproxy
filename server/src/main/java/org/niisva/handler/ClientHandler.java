@@ -14,8 +14,13 @@ public class ClientHandler extends ChannelInboundHandlerAdapter {
     private final ChannelGroup socks5channels;
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-        for (var ch : socks5channels) {
-            ch.writeAndFlush(msg);
+        log.info("channelRead called");
+        if (msg instanceof ByteBuf msgBuf) {
+            byte[] bytes = new byte[msgBuf.readableBytes()];
+            msgBuf.getBytes(msgBuf.readerIndex(), bytes);
+            for (var ch : socks5channels) {
+                ch.writeAndFlush(bytes);
+            }
         }
     }
 

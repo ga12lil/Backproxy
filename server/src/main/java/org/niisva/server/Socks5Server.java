@@ -23,7 +23,6 @@ public class Socks5Server {
     private final int backlogSize;
     private final ChannelGroup channels;
     private final ChannelGroup socks5channels;
-    private final HashMap<String, ByteBuf> targetAddresses;
 
     public void run() throws Exception {
         EventLoopGroup bossGroup = new NioEventLoopGroup(1);
@@ -40,7 +39,7 @@ public class Socks5Server {
                                     Socks5ServerEncoder.DEFAULT,
                                     new Socks5InitialRequestDecoder(),
                                     new Socks5CommandRequestDecoder(),
-                                    new Socks5ServerHandler(channels, targetAddresses)
+                                    new Socks5ServerHandler(channels)
                             );
                             socks5channels.add(ch);
                         }

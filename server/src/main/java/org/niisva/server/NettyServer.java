@@ -43,7 +43,6 @@ public class NettyServer {
                     .childOption(ChannelOption.SO_KEEPALIVE, true);
 
             ChannelFuture f = b.bind(port).sync();
-            channel = f.channel();
             log.info("TCP Server started on port " + port);
 
             f.channel().closeFuture().sync();
