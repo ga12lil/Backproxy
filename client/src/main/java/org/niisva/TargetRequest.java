@@ -23,11 +23,14 @@ public class TargetRequest {
     private Channel channel;
     private WorkClient parentClient;
 
-    public TargetRequest(String host, int port, ByteBuf bytes, WorkClient parentClient) {
+    public int channelId;
+
+    public TargetRequest(String host, int port, ByteBuf bytes, WorkClient parentClient, int channelId) {
         this.host = host;
         this.port = port;
         this.bytes = bytes;
         this.parentClient = parentClient;
+        this.channelId = channelId;
     }
 
     public void connect() throws InterruptedException {

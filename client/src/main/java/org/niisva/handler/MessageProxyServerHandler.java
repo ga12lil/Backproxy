@@ -25,6 +25,7 @@ public class MessageProxyServerHandler extends SimpleChannelInboundHandler<ByteB
     protected void channelRead0(ChannelHandlerContext ctx, ByteBuf msg) throws Exception {
         log.info("channelRead0 waw called");
 
+        int channelId = msg.readUnsignedShort();
         int hostLength = msg.readByte();
         byte[] hostBytes = new byte[hostLength];
         msg.readBytes(hostBytes);
@@ -52,7 +53,7 @@ public class MessageProxyServerHandler extends SimpleChannelInboundHandler<ByteB
                 parentClient.requests.get(index).SendingRequest();
             } else {
                 log.info("Connected to host: {}, port: {}", host, port);
-                parentClient.requests.add(new TargetRequest(host, port, data, parentClient));
+                parentClient.requests.add(new TargetRequest(host, port, data, parentClient, channelId));
                 try {
                     parentClient.requests.get(parentClient.requests.size() - 1).connect();
                 } catch (InterruptedException e) {

@@ -22,12 +22,18 @@ public class MessageTargetServerHandler extends SimpleChannelInboundHandler<Byte
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, ByteBuf msg) throws Exception {
 
-        log.info("channelRead0 was called");
+        //log.info("channelRead0 was called");
 
-        byte[] bytes = new byte[msg.readableBytes()];
-        msg.readBytes(bytes);
-        log.info("Answer: {}", new String(bytes, StandardCharsets.UTF_8));
-        parentClient.channel.writeAndFlush(Unpooled.wrappedBuffer(bytes));
+        //byte[] bytes = new byte[msg.readableBytes()];
+        //msg.readBytes(bytes);
+        //log.info("Answer: {}", new String(bytes, StandardCharsets.UTF_8));
+
+        //parentClient.channel.writeAndFlush(Unpooled.wrappedBuffer(bytes));
+        int msgLength = msg.readableBytes();
+        ByteBuf buffer = Unpooled.buffer(2 + msgLength);
+        buffer.writeShort(parentRequest.channelId);
+        buffer.writeBytes(msg);
+        parentClient.channel.writeAndFlush(buffer);
     }
 
     @Override
