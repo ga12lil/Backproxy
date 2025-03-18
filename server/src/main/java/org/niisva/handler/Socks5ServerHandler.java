@@ -3,12 +3,11 @@ package org.niisva.handler;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.channel.*;
-import io.netty.channel.group.ChannelGroup;
 import io.netty.handler.codec.socksx.v5.*;
 import io.netty.handler.codec.socksx.v5.Socks5CommandStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-
+import org.niisva.util.LoadBalancer;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 
@@ -16,7 +15,7 @@ import java.nio.charset.StandardCharsets;
 @RequiredArgsConstructor
 public class Socks5ServerHandler extends ChannelInboundHandlerAdapter {
 
-    private final ChannelGroup channels;
+    private final LoadBalancer loadBalancer;
     private byte[] targetAddress = null;
 
     @Override
@@ -32,19 +31,19 @@ public class Socks5ServerHandler extends ChannelInboundHandlerAdapter {
             }
         } else {
             if (msg instanceof ByteBuf msgBuf) {
-                byte[] bytes = new byte[msgBuf.readableBytes()];
-                msgBuf.getBytes(msgBuf.readerIndex(), bytes);
+//                byte[] bytes = new byte[msgBuf.readableBytes()];
+//                msgBuf.getBytes(msgBuf.readerIndex(), bytes);
 
                 ByteBufAllocator allocator = ByteBufAllocator.DEFAULT;
-                // Запись данных в ByteBuf
-                for (var ch : channels) {
-                    ByteBuf bufAdr = allocator.buffer(); // Создает новый ByteBuf
-                    ByteBuf buf = allocator.buffer();
-                    bufAdr.writeBytes(targetAddress);
-                    buf.writeBytes(bytes);
-                    ch.write(bufAdr);
-                    ch.writeAndFlush(buf);
-                }
+                ByteBuf bufAdr = allocator.buffer(); // Создает новый ByteBuf
+//                ByteBuf buf = allocator.buffer();
+                bufAdr.writeBytes(targetAddress);
+//                buf.writeBytes(bytes);
+
+                Channel ch = loadBalancer.getNodeChannelToSend(ctx.channel());
+                ch.write(bufAdr);
+//                ch.writeAndFlush(buf);
+                ch.writeAndFlush(msgBuf);
             }
         }
     }

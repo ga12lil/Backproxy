@@ -12,6 +12,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.niisva.handler.ClientHandler;
 import org.niisva.handler.ToConsoleOutputHandler;
 import io.netty.buffer.Unpooled;
+import org.niisva.util.LoadBalancer;
+
 import java.nio.charset.StandardCharsets;
 
 @Slf4j
@@ -19,8 +21,7 @@ import java.nio.charset.StandardCharsets;
 public class NettyServer {
     private final int port;
     private final int backlogSize;
-    private final ChannelGroup channels;
-    private final ChannelGroup socks5channels;
+    private final LoadBalancer loadBalancer;
 
     public void run() throws Exception {
         EventLoopGroup bossGroup = new NioEventLoopGroup();
@@ -33,9 +34,10 @@ public class NettyServer {
                     .childHandler(new ChannelInitializer<Channel>() {
                         @Override
                         protected void initChannel(Channel ch) throws Exception {
-                            ch.pipeline().addLast(new ClientHandler(socks5channels)
+                            ch.pipeline().addLast(new ClientHandler(loadBalancer)
                             );
-                            channels.add(ch);
+//                            channels.add(ch);
+                            loadBalancer.addNodeConnection(ch);
                             log.info("new connection with id: " + ch.id());
                         }
                     })
