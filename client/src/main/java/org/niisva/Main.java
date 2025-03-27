@@ -7,10 +7,9 @@ import org.niisva.client.WorkClient;
 public class Main {
     public static void main(String[] args) {
         try {
-            new WorkClient("localhost", 8000).connect();
+            new Node("localhost", 8000).cmdClient.connect();
         } catch (Exception e) {
             log.info(e.getMessage());
         }
-
     }
 }
