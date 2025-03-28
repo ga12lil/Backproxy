@@ -7,16 +7,20 @@ import io.netty.handler.codec.socksx.v5.*;
 import io.netty.handler.codec.socksx.v5.Socks5CommandStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.niisva.util.LoadBalancer;
+import org.niisva.util.ConnectionResolver;
+
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.concurrent.CompletableFuture;
 
 @Slf4j
 @RequiredArgsConstructor
 public class Socks5ServerHandler extends ChannelInboundHandlerAdapter {
 
-    private final LoadBalancer loadBalancer;
-    private byte[] targetAddress = null;
+    private final ConnectionResolver connectionResolver;
+    private final CompletableFuture<ByteBuf> nodeDataChannelFuture = new CompletableFuture<>();
+    //private byte[] targetAddress = null;
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) {
@@ -31,31 +35,48 @@ public class Socks5ServerHandler extends ChannelInboundHandlerAdapter {
             }
         } else {
             if (msg instanceof ByteBuf msgBuf) {
-//                byte[] bytes = new byte[msgBuf.readableBytes()];
-//                msgBuf.getBytes(msgBuf.readerIndex(), bytes);
-
-                ByteBufAllocator allocator = ByteBufAllocator.DEFAULT;
-                ByteBuf bufAdr = allocator.buffer(); // Создает новый ByteBuf
-//                ByteBuf buf = allocator.buffer();
-                bufAdr.writeBytes(targetAddress);
-//                buf.writeBytes(bytes);
-
-                Channel ch = loadBalancer.getNodeChannelToSend(ctx.channel());
-                ch.write(bufAdr);
-//                ch.writeAndFlush(buf);
-                ch.writeAndFlush(msgBuf);
+                Channel ch = connectionResolver.getDataChannel(ctx.channel());
+                //ch.write(bufAdr);
+                if (ch == null) {
+                    nodeDataChannelFuture.thenAccept(idData -> {
+                        Channel toSend = connectionResolver.getDataChannel(ctx.channel());
+                        log.info("ready to send");
+                        toSend.writeAndFlush(msgBuf);
+                    });
+                }
+                else {
+                    ch.writeAndFlush(msgBuf);
+                }
             }
         }
     }
 
     private void handleConnect(ChannelHandlerContext ctx, Socks5CommandRequest request) {
+        Channel ch = connectionResolver.getServiceChannel(ctx.channel());
+        ByteBufAllocator allocator = ByteBufAllocator.DEFAULT;
+
+        byte msgType = (byte) 2;
+        ByteBuf msgTypeBuf = allocator.buffer();
+        msgTypeBuf.writeByte(msgType);
+        ch.write(msgTypeBuf);
+
+        int id = connectionResolver.getIdForClient(ctx.channel());
+        byte[] byteId = ByteBuffer.allocate(4).putInt(id).array();
+        ByteBuf idBuf = allocator.buffer();
+        idBuf.writeBytes(Arrays.copyOfRange(byteId, 2, byteId.length));
+        ch.write(idBuf);
+
         byte[] adr = request.dstAddr().getBytes(StandardCharsets.UTF_8);
         byte[] port = ByteBuffer.allocate(4).putInt(request.dstPort()).array();
         byte adrLen = (byte) adr.length;
-        targetAddress = new byte[adrLen + 3];
+        byte [] targetAddress = new byte[adrLen + 3];
         targetAddress[0] = adrLen;
         System.arraycopy(adr, 0,targetAddress, 1, adrLen);
         System.arraycopy(port, 2, targetAddress, adrLen + 1, 2);
+        ByteBuf adrBuf = allocator.buffer();
+        adrBuf.writeBytes(targetAddress);
+        ch.writeAndFlush(adrBuf);
+
         ctx.writeAndFlush(new DefaultSocks5CommandResponse(
                 Socks5CommandStatus.SUCCESS,
                 request.dstAddrType(),
@@ -69,6 +90,11 @@ public class Socks5ServerHandler extends ChannelInboundHandlerAdapter {
                 log.info("CONNECT RESPONSE WAS DELIVERED");
             }
         });
+
+    }
+
+    public void setFutureComplete(ByteBuf data) {
+        nodeDataChannelFuture.complete(data);
     }
 
     @Override

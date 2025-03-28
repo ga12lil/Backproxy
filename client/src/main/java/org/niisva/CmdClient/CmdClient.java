@@ -65,7 +65,7 @@ public class CmdClient {
             int clientId = msg.readUnsignedShort();
             parentNode.NodeConnectionToProxyServer(clientId);
         }
-        if (typeCommand == 2)
+        else if (typeCommand == 2)
         {
             int clientId = msg.readUnsignedShort();
             int length = msg.readByte();

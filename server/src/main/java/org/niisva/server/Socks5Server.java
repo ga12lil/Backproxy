@@ -10,7 +10,7 @@ import io.netty.handler.logging.LoggingHandler;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.niisva.handler.Socks5ServerHandler;
-import org.niisva.util.LoadBalancer;
+import org.niisva.util.ConnectionResolver;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -18,7 +18,8 @@ public class Socks5Server {
 
     private final int port;
     private final int backlogSize;
-    final LoadBalancer loadBalancer;
+    final ConnectionResolver connectionResolver;
+
 
     public void run() throws Exception {
         EventLoopGroup bossGroup = new NioEventLoopGroup(1);
@@ -35,10 +36,9 @@ public class Socks5Server {
                                     Socks5ServerEncoder.DEFAULT,
                                     new Socks5InitialRequestDecoder(),
                                     new Socks5CommandRequestDecoder(),
-                                    new Socks5ServerHandler(loadBalancer)
+                                    new Socks5ServerHandler(connectionResolver)
                             );
-//                            socks5channels.add(ch);
-                            loadBalancer.addSocks5Connection(ch);
+                            connectionResolver.addClientConnection(ch);
                         }
                     })
                     .option(ChannelOption.SO_BACKLOG, backlogSize)

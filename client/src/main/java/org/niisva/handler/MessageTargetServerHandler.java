@@ -1,7 +1,9 @@
 package org.niisva.handler;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelOption;
 import io.netty.channel.SimpleChannelInboundHandler;
+import io.netty.channel.socket.nio.NioSocketChannel;
 import lombok.extern.slf4j.Slf4j;
 import org.niisva.TargetRequest;
 import org.niisva.client.WorkClient;
@@ -21,6 +23,11 @@ public class MessageTargetServerHandler extends SimpleChannelInboundHandler<Byte
 
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, ByteBuf msg) throws Exception {
+        int receiveBufferSize = ((NioSocketChannel) ctx.channel()).config().getOption(ChannelOption.SO_RCVBUF);
+        int sendBufferSize = ((NioSocketChannel) ctx.channel()).config().getOption(ChannelOption.SO_SNDBUF);
+
+        System.out.println("Receive buffer size: " + receiveBufferSize);
+        System.out.println("Send buffer size: " + sendBufferSize);
 
         //log.info("channelRead0 was called");
 
@@ -32,6 +39,7 @@ public class MessageTargetServerHandler extends SimpleChannelInboundHandler<Byte
         int msgLength = msg.readableBytes();
         ByteBuf buffer = Unpooled.buffer(2 + msgLength);
         buffer.writeShort(parentRequest.channelId);
+        log.info("id to s: {}", parentRequest.channelId);
         buffer.writeBytes(msg);
         parentClient.channel.writeAndFlush(buffer);
     }

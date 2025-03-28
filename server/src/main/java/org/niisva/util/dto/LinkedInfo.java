@@ -1,4 +1,4 @@
-package org.niisva.util;
+package org.niisva.util.dto;
 
 import io.netty.channel.Channel;
 import lombok.AllArgsConstructor;
@@ -9,6 +9,7 @@ import java.time.LocalDateTime;
 @Data
 @AllArgsConstructor
 public class LinkedInfo {
-    private Channel linkedNode;
+    private Channel serviceChannel;
+    private Channel dataChannel;
     private LocalDateTime ttl;
 }

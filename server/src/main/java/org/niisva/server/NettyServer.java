@@ -2,26 +2,22 @@ package org.niisva.server;
 
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
-import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.niisva.handler.ClientHandler;
-import org.niisva.handler.ToConsoleOutputHandler;
-import io.netty.buffer.Unpooled;
-import org.niisva.util.LoadBalancer;
-
-import java.nio.charset.StandardCharsets;
+import org.niisva.handler.NodeHandlers.DataHandler;
+import org.niisva.handler.NodeHandlers.ServiceHandler;
+import org.niisva.util.ConnectionResolver;
 
 @Slf4j
 @RequiredArgsConstructor
 public class NettyServer {
     private final int port;
     private final int backlogSize;
-    private final LoadBalancer loadBalancer;
+    private final ConnectionResolver connectionResolver;
 
     public void run() throws Exception {
         EventLoopGroup bossGroup = new NioEventLoopGroup();
@@ -34,11 +30,16 @@ public class NettyServer {
                     .childHandler(new ChannelInitializer<Channel>() {
                         @Override
                         protected void initChannel(Channel ch) throws Exception {
-                            ch.pipeline().addLast(new ClientHandler(loadBalancer)
-                            );
-//                            channels.add(ch);
-                            loadBalancer.addNodeConnection(ch);
-                            log.info("new connection with id: " + ch.id());
+                            Channel service = connectionResolver.tryGetServiceConnection(ch);
+                            if (service == null) {
+                                ch.pipeline().addLast(new ServiceHandler()
+                                );
+                                connectionResolver.addNodeServiceConnection(ch);
+                            }
+                            else {
+                                ch.pipeline().addLast(new DataHandler(connectionResolver)
+                                );
+                            }
                         }
                     })
                     .option(ChannelOption.SO_BACKLOG, backlogSize)

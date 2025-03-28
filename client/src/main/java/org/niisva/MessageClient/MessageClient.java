@@ -49,7 +49,7 @@ public class MessageClient {
                     .handler(new ChannelInitializer<SocketChannel>() {
                         @Override
                         protected void initChannel(SocketChannel ch) throws Exception {
-                            ch.pipeline().addLast(new ProxyServerMessageHandler(MessageClient.this, parentNode));
+                            ch.pipeline().addLast(new ProxyServerMessageHandler(MessageClient.this, parentNode, clientId));
                         }
                     });
             ChannelFuture future = bootstrap.connect(proxyServerHost, proxyServerPort).sync();
