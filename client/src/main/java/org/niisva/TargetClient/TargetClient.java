@@ -12,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.niisva.MessageClient.MessageClient;
 import org.niisva.Node;
 import io.netty.buffer.ByteBuf;
+import java.util.concurrent.CompletableFuture;
 
 @Slf4j
 public class TargetClient {
@@ -45,10 +46,13 @@ public class TargetClient {
             ChannelFuture future = bootstrap.connect(host, port).sync();
             channel = future.channel();
 
+            messageClient.connectionFuture.complete(null);
+
             log.info("Target client connected to target server:\r\n" +
                     "{}:{}\r\n" +
                     "messageClient id: {}", host, port, messageClient.clientId);
             future.channel().closeFuture().sync();
+            messageClient.connectionFuture = new CompletableFuture<>();
         }
         finally
         {

@@ -22,7 +22,6 @@ public class TargetServerMessageHandler extends ChannelInboundHandlerAdapter {
     {
         if (msg instanceof ByteBuf buf) {
             parentTargetClient.SendMessageToClientViaMessageHandler(buf);
-
             log.info("done");
         }
 

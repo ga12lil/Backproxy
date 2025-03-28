@@ -15,7 +15,7 @@ import org.niisva.TargetClient.TargetClient;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-
+import java.util.concurrent.CompletableFuture;
 @Slf4j
 public class MessageClient {
     public String proxyServerHost;
@@ -28,6 +28,7 @@ public class MessageClient {
     public TargetClient targetClient;
     public int clientId;
     private final ExecutorService executorService;
+    public CompletableFuture<Void> connectionFuture = new CompletableFuture<>();
 
     public MessageClient(String proxyServerHost, int proxyServerPort, int clientId, Node node)
     {
@@ -94,12 +95,11 @@ public class MessageClient {
 
     public void SendMessageToTargetAddressViaTargetClient(ByteBuf msg)
     {
-        if (targetClient == null)
-        {
-            log.info("Target client not connected to target address");
-            return;
-        }
-        targetClient.channel.writeAndFlush(msg);
+        connectionFuture.thenRun(() -> {
+                targetClient.channel.writeAndFlush(msg);
+                log.info("Message sent!");
+
+        });
         log.info("MessageCLient send message by TargetClient to target server: {}:{} for client#{}",
                  targetServerHost, targetServerPort, clientId);
     }
