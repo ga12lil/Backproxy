@@ -71,6 +71,7 @@ public class MessageClient {
         if (targetHost == targetServerHost && targetPort == targetServerPort)
         {
             log.error("Node already connected to target address: {}:{}", targetHost, targetPort);
+            parentNode.cmdClient.OnAlreadyConnectedToTargetAddress(clientId, targetHost, targetPort);
             return;
             //TODO Отправлять какое-то сообщение прокси серверу если надо
         }
@@ -88,6 +89,7 @@ public class MessageClient {
                 targetClient = null;
                 targetServerHost = null;
                 targetServerPort = -1;
+                parentNode.cmdClient.OnFailConnectedToTargetAddress(clientId, targetHost, targetPort);
                 //TODO Отправлять какое-то сообщение прокси серверу если надо
             }
         });

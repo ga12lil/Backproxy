@@ -11,6 +11,7 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import lombok.extern.slf4j.Slf4j;
 import org.niisva.Node;
+import io.netty.buffer.Unpooled;
 
 import java.nio.charset.StandardCharsets;
 
@@ -81,4 +82,58 @@ public class CmdClient {
             //TODO Отправлять какое-то сообщение прокси серверу если надо
         }
     }
+
+    public void OnFailConnectedToProxyServer(int clientId)
+    {
+        byte errorType = 1;
+
+        ByteBuf buffer = Unpooled.buffer();
+        buffer.writeByte(errorType);
+        buffer.writeInt((short)clientId);
+
+        channel.writeAndFlush(buffer);
+    }
+
+    public void OnAlreadyConnectedToProxyServerForClient(int clientId)
+    {
+        byte errorType = 3;
+
+        ByteBuf buffer = Unpooled.buffer();
+        buffer.writeByte(errorType);
+        buffer.writeShort(clientId);
+
+        channel.writeAndFlush(buffer);
+    }
+
+    public void OnFailConnectedToTargetAddress(int clientId, String targetHost, int targetPort)
+    {
+        byte errorType = 2;
+
+        ByteBuf buffer = Unpooled.buffer();
+        buffer.writeByte(errorType);
+        buffer.writeShort((short)clientId);
+        byte[] bytes = targetHost.getBytes();
+        buffer.writeShort(bytes.length);
+        buffer.writeBytes(bytes);
+        buffer.writeShort(targetPort);
+
+        channel.writeAndFlush(buffer);
+    }
+
+    public void OnAlreadyConnectedToTargetAddress(int clientId, String targetHost, int targetPort)
+    {
+        byte errorType = 4;
+
+        ByteBuf buffer = Unpooled.buffer();
+        buffer.writeByte(errorType);
+        buffer.writeShort((short)clientId);
+        byte[] bytes = targetHost.getBytes();
+        buffer.writeShort(bytes.length);
+        buffer.writeBytes(bytes);
+        buffer.writeShort(targetPort);
+
+        channel.writeAndFlush(buffer);
+    }
+
+
 }

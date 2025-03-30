@@ -34,6 +34,7 @@ public class Node {
         {
             log.error("Node already connected to proxy: {}:{}", proxyServerHost, proxyServerPort);
             //TODO Отправлять какое-то сообщение прокси серверу если надо
+            cmdClient.OnAlreadyConnectedToProxyServerForClient(clientId);
             return;
         }
         MessageClient mc = new MessageClient(proxyServerHost, proxyServerPort, clientId, this);
@@ -47,6 +48,7 @@ public class Node {
             {
                 log.error("Connection to proxy: {}:{} failed", proxyServerHost, proxyServerPort);
                 messageClients.remove(clientId);
+                cmdClient.OnFailConnectedToProxyServer(clientId);
                 //TODO Отправлять какое-то сообщение прокси серверу если надо
             }
         });
