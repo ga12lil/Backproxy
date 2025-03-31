@@ -10,7 +10,7 @@ import org.niisva.util.ConnectionResolver;
 @RequiredArgsConstructor
 public class DataHandler extends ChannelInboundHandlerAdapter {
     private int id = -1;
-    private final ConnectionResolver connectionResolver;;
+    private final ConnectionResolver connectionResolver;
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         if (msg instanceof ByteBuf msgBuf) {
@@ -26,5 +26,10 @@ public class DataHandler extends ChannelInboundHandlerAdapter {
                 connectionResolver.getClientChannel(id).writeAndFlush(msgBuf);
             }
         }
+    }
+
+    @Override
+    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+        connectionResolver.disconnectDataChannel(ctx.channel());
     }
 }

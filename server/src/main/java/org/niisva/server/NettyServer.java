@@ -32,7 +32,7 @@ public class NettyServer {
                         protected void initChannel(Channel ch) throws Exception {
                             Channel service = connectionResolver.tryGetServiceConnection(ch);
                             if (service == null) {
-                                ch.pipeline().addLast(new ServiceHandler()
+                                ch.pipeline().addLast(new ServiceHandler(connectionResolver)
                                 );
                                 connectionResolver.addNodeServiceConnection(ch);
                             }

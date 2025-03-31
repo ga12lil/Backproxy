@@ -10,13 +10,14 @@ import java.nio.ByteBuffer;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 @RequiredArgsConstructor
 public class ConnectionResolver {
-    private final HashMap<String, Integer> ipToClientId = new HashMap<>();
-    private final HashMap<Integer, Channel> clients = new HashMap<>();
-    private final HashMap<Integer, LinkedInfo> routes = new HashMap<>();
+    private final ConcurrentHashMap<String, Integer> ipToClientId = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<Integer, Channel> clients = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<Integer, LinkedInfo> routes = new ConcurrentHashMap<>();
     private final Queue<Channel> nodesQueue = new LinkedList<>();
 
     private final int timeToLive;
@@ -96,7 +97,14 @@ public class ConnectionResolver {
 
     public Channel getDataChannel(Channel channel) {
         int id = getIdForClient(channel);
-        return routes.get(id).getDataChannel();
+        LinkedInfo route = routes.get(id);
+        Channel dataChannel = route.getDataChannel();
+        if (dataChannel!=null && !dataChannel.isActive()) {
+            routes.remove(id);
+            addClientConnection(channel);
+            return null;
+        }
+        return dataChannel;
     }
 
     public int getIdForClient(Channel channel) {
@@ -105,6 +113,51 @@ public class ConnectionResolver {
 
     public Channel getClientChannel(int id) {
         return clients.get(id);
+    }
+
+    public void disconnectClient (Channel channel) {
+        //disconnectDataChannel(routes.get(getIdForClient(channel)).getDataChannel());
+
+    }
+
+    public void disconnectDataChannel (Channel channel) {
+        if(channel.isActive()) {
+            channel.close();
+        }
+        routes.entrySet().stream()
+                .filter(route -> route.getValue().getDataChannel()==channel)
+                .forEach(route -> {
+                    route.getValue().setDataChannel(null);
+                });
+    }
+
+    public void disconnectServiceChannel (Channel channel) {
+        nodesQueue.remove(channel);
+        routes.entrySet().stream()
+                .filter(route -> route.getValue().getServiceChannel()==channel)
+                .forEach(route -> {
+                    routes.remove(route.getKey());
+                });
+    }
+
+    public void cleanDisconnected() {
+        routes.entrySet().stream().filter(route -> {
+            long secondsPassed = ChronoUnit.SECONDS.between(route.getValue().getTtl(), LocalDateTime.now());
+            if (secondsPassed > timeToLive) {
+                if (!clients.get(route.getKey()).isActive()) {
+                    return true;
+                }
+                else {
+                    route.getValue().setTtl(LocalDateTime.now());
+                }
+            }
+            return false;
+        }).forEach(route -> {
+            int id = route.getKey();
+            routes.remove(id);
+            ipToClientId.remove(getIpAdr(clients.get(id)));
+            clients.remove(id);
+        });
     }
 
     private String getIpAdr(Channel channel) {

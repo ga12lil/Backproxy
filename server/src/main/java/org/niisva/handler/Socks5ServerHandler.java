@@ -36,8 +36,7 @@ public class Socks5ServerHandler extends ChannelInboundHandlerAdapter {
         } else {
             if (msg instanceof ByteBuf msgBuf) {
                 Channel ch = connectionResolver.getDataChannel(ctx.channel());
-                //ch.write(bufAdr);
-                if (ch == null) {
+                if (ch == null) { //если запрос пришел раньше чем нода выделила подключение для этого клиента
                     nodeDataChannelFuture.thenAccept(idData -> {
                         Channel toSend = connectionResolver.getDataChannel(ctx.channel());
                         log.info("ready to send");
@@ -95,6 +94,11 @@ public class Socks5ServerHandler extends ChannelInboundHandlerAdapter {
 
     public void setFutureComplete(ByteBuf data) {
         nodeDataChannelFuture.complete(data);
+    }
+
+    @Override
+    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+        connectionResolver.disconnectClient(ctx.channel());
     }
 
     @Override

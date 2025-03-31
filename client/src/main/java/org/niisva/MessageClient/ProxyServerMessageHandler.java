@@ -41,4 +41,9 @@ public class ProxyServerMessageHandler extends ChannelInboundHandlerAdapter {
         idBuf.writeBytes(Arrays.copyOfRange(byteId, 2, byteId.length));
         ctx.writeAndFlush(idBuf);
     }
+
+    @Override
+    public void channelInactive(ChannelHandlerContext ctx) {
+        parentNode.messageClients.remove(clientId);
+    }
 }

@@ -37,7 +37,23 @@ public class Main {
                     }
                 }
         );
+        Thread cleaner = new Thread(
+                new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            do {
+                                connectionResolver.cleanDisconnected();
+                                Thread.sleep(60000);
+                            } while (true);
+                        } catch (Exception e) {
+                            log.info(e.getMessage());
+                        }
+                    }
+                }
+        );
         tcpThread.start();
         socks5Thread.start();
+        cleaner.start();
     }
 }
