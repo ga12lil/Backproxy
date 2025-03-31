@@ -1,6 +1,7 @@
 package org.niisva.handler.NodeHandlers;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import lombok.RequiredArgsConstructor;
@@ -17,13 +18,20 @@ public class DataHandler extends ChannelInboundHandlerAdapter {
             if (id == -1) {
                 id = msgBuf.getUnsignedShort(0);
                 connectionResolver.addNodeDataConnection(ctx.channel(),id);
-                connectionResolver.getClientChannel(id)
+                Socks5ServerHandler handler = connectionResolver.getClientChannel(id)
                         .pipeline()
-                        .get(Socks5ServerHandler.class)
-                        .setFutureComplete(null);
+                        .get(Socks5ServerHandler.class);
+
+                if (handler != null) {
+                    handler.setFutureComplete(null);
+                }
+
             }
             else {
-                connectionResolver.getClientChannel(id).writeAndFlush(msgBuf);
+                Channel client = connectionResolver.getClientChannel(id);
+                if (client != null) {
+                    client.writeAndFlush(msgBuf);
+                }
             }
         }
     }
