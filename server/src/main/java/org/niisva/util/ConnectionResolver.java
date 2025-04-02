@@ -11,11 +11,14 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import org.niisva.util.Pair;
+import java.net.InetSocketAddress;
 
 @Slf4j
 @RequiredArgsConstructor
 public class ConnectionResolver {
-    private final ConcurrentHashMap<String, Integer> ipToClientId = new ConcurrentHashMap<>();
+    //private final ConcurrentHashMap<String, Integer> ipToClientId = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<Pair, Integer> ipToClientId = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<Integer, Channel> clients = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<Integer, LinkedInfo> routes = new ConcurrentHashMap<>();
     private final Queue<Channel> nodesQueue = new LinkedList<>();
@@ -23,7 +26,8 @@ public class ConnectionResolver {
     private final int timeToLive;
 
     public void addClientConnection(Channel channel) {
-        String clientAdr = getIpAdr(channel);
+        //String clientAdr = getIpAdr(channel);
+        Pair clientAdr = getAdr(channel);
         Integer id = ipToClientId.get(clientAdr);
         if (id == null) {
             Random random = new Random();
@@ -108,7 +112,25 @@ public class ConnectionResolver {
     }
 
     public int getIdForClient(Channel channel) {
-        return ipToClientId.get(getIpAdr(channel));
+        //String str = getIpAdr(channel);
+        Pair pair = getAdr(channel);
+        /*
+        log.info("STR: {}:{} cnt: {}", pair.host, pair.port, ipToClientId.values().size());
+        for (Pair p: ipToClientId.keySet())
+        {
+            log.info("in HasmMap keys: {}:{}", p.host, p.port);
+        }
+        for (int p: ipToClientId.values())
+        {
+            log.info("in HasmMap values: {}:{}", p);
+        }
+        */
+        //int id = ipToClientId.get(str);
+        int id = ipToClientId.get(pair);
+        return id;
+        //Pair pair = getAdr(channel);
+        //log.info("host: {} port: {}", pair.host, pair.port);
+        //return ipToClientId.get(pair);
     }
 
     public Channel getClientChannel(int id) {
@@ -163,6 +185,13 @@ public class ConnectionResolver {
     private String getIpAdr(Channel channel) {
         log.info("adr: {}",channel.remoteAddress().toString());
         return extractIp(channel.remoteAddress().toString());
+    }
+
+    private Pair getAdr(Channel channel) {
+        InetSocketAddress remoteAddress = (InetSocketAddress) channel.remoteAddress();
+        String remoteHost = remoteAddress.getHostString();
+        int remotePort = remoteAddress.getPort();
+        return new Pair(remoteHost, remotePort);
     }
 
     private String extractIp(String input) {
