@@ -1,0 +1,79 @@
+version: "3.8"
+
+services:
+
+  socks5client:
+    build:
+      context: .
+      dockerfile: Dockerfile.cl
+    container_name: socks5client
+    ports:
+      - "9080:9080"
+    networks:
+      - app-network
+    depends_on:
+      - server
+
+
+  socks5client2:
+    build:
+      context: .
+      dockerfile: Dockerfile.cl2
+    container_name: socks5client2
+    ports:
+      - "9081:9081"
+    networks:
+      - app-network
+    depends_on:
+      - server
+
+  client1:
+    build:
+      context: .
+      dockerfile: Dockerfile.client
+    container_name: client1
+    ports:
+      - "8080:8080"
+    networks:
+      - app-network
+    depends_on:
+      - server
+
+  client2:
+    build:
+      context: .
+      dockerfile: Dockerfile.client
+    container_name: client2
+    ports:
+      - "8090:8090"
+    networks:
+      - app-network
+    depends_on:
+      - server
+
+  client3:
+    build:
+      context: .
+      dockerfile: Dockerfile.client
+    container_name: client3
+    ports:
+      - "8010:8010"
+    networks:
+      - app-network
+    depends_on:
+      - server
+
+  server:
+    build:
+      context: .
+      dockerfile: Dockerfile.server
+    container_name: server
+    ports:
+      - "8000:8000"
+      - "1080:1080"
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge

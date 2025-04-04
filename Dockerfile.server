@@ -1,6 +1,0 @@
-FROM eclipse-temurin:21-jdk-jammy
-WORKDIR /app
-COPY server-1.0-SNAPSHOT.jar server-1.0-SNAPSHOT.jar
-EXPOSE 8000
-EXPOSE 1080
-ENTRYPOINT ["java", "-jar", "server-1.0-SNAPSHOT.jar"]
